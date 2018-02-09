@@ -1,2 +1,29 @@
-<!doctype html>
-<h1>Hello from Flask</h1>
+<html>
+  <head>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <h1>Hello from Flask</h1>
+    <script type="text/javascript" charset="utf-8">
+$(document).ready(function() {
+  //var socket = io.connect('http://' + document.domain + ':' + location.port);
+  var socket = io.connect('http://127.0.0.1:5000');
+  socket.on('connect', function() {
+    socket.send('my event sent');
+  });
+  socket.on('message', function(msg) {
+    $("#messages").append('<li>'+msg+'</li>');
+    console.log('Received message');
+  });
+  $('#sendbutton').on('click', function() {
+    socket.send($('#myMessage').val());
+    $('#myMessage').val('');
+  });
+});
+    </script>
+    <ul id="messages"></ul>
+    <input type="text" id="myMessage">
+    <button id="sendbutton">Send</button>
+  </body>
+</html>
