@@ -1,42 +1,11 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, send
 import sys
+from unmo import Unmo
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
-#redis = Redis(host='redis', port=6379)
-
-
-class Responder(object):
-    """docstring for Responder."""
-    def __init__(self, name):
-        self._name = name
-
-    def response(self, text):
-        return '{}ってなに？'.format(text)
-
-    @property
-    def name(self):
-        return self._name
-
-
-class Unmo(object):
-    """docstring for Unmo."""
-    def __init__(self, name):
-        self._name = name
-        self._responder = Responder('What')
-
-    def dialogue(self, text):
-        return self._responder.response(text)
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def responder_name(self):
-        return self._responder.name
 
 
 @app.route('/')
