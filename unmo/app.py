@@ -26,6 +26,7 @@ def handle_message(message):
     prompt_response = '{prompt}{response}'.format(prompt=build_prompt(proto), response=response)
     send(prompt_response, broadcast=True)
 
+    proto.save()
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', debug=True)
