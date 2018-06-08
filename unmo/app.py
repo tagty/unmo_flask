@@ -21,7 +21,15 @@ def handle_message(message):
     send(message, broadcast=True)
 
     proto = Unmo('proto')
-    response = proto.dialogue(message)
+
+    try:
+        response = proto.dialogue(message)
+    except IndexError as error:
+        print('{}: {}'.format(type(error).__name__, str(error)))
+        print('Error: Dictionary is empty. (Responder: {})'.format(proto.responder_name))
+    else:
+        print('{prompt}{response}'.format(prompt=build_prompt(proto), response=response))
+
     print('response message: ' + response, file=sys.stderr)
     prompt_response = '{prompt}{response}'.format(prompt=build_prompt(proto), response=response)
     send(prompt_response, broadcast=True)
@@ -30,3 +38,4 @@ def handle_message(message):
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', debug=True)
+

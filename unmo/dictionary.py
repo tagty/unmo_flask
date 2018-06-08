@@ -1,19 +1,35 @@
-import re
-from janome.tokenizer import Tokenizer
+import os.path
+from collections import defaultdict
+import morph
 
 class Dictionary:
-    """docstring for [object Object]."""
+    DICT = { 
+            'random': 'unmo/dics/random.txt',
+            'pattern': 'unmo/dics/pattern.txt',
+            'template': 'unmo/dics/template.txt',
+            }
 
-    DICT_RANDOM = 'unmo/dics/random.txt'
-    DICT_PATTERN = 'unmo/dics/pattern.txt'
-    TOKENIZER = Tokenizer()
 
     def __init__(self):
-        with open(Dictionary.DICT_RANDOM, encoding='utf-8') as f:
+        with open(Dictionary.DICT['random'], encoding='utf-8') as f:
             self._random = [x for x in f.read().splitlines() if x]
 
-        with open(Dictionary.DICT_PATTERN, encoding='utf-8') as f:
+        with open(Dictionary.DICT['pattern'], encoding='utf-8') as f:
             self._pattern = [Dictionary.make_pattern(l) for l in f.read().splitlines() if l]
+
+        with open(Dictionary.DICT['template'], encoding='utf-8') as f:
+            self._template = defaultdict(lambda: [], {})
+            for line in f:
+                count, template = line.strip().split('\t')
+                if count and template:
+                    count = int(count)
+                    self._template[count].append(template)
+
+    @staticmethod
+    def touch_dics():
+        for dic in Dictionary.DICT.values():
+            if not os.path.exists(dic):
+                open(dic, 'w').close()
 
     @staticmethod
     def make_pattern(line):
@@ -29,7 +45,11 @@ class Dictionary:
     def pattern(self):
         return self._pattern
 
-    def study(self, text):
+    @property
+    def template(self):
+        return self._template
+
+    def study(self, text, parts):
         self.study_random(text)
 
     def study_random(self, text):
@@ -46,18 +66,31 @@ class Dictionary:
                 else:
                     self._pattern.append({'pattern': word, 'phrases': [text]})
 
+    def study_template(self, parts):
+        template = ''
+        count = 0
+        for word, part in parts:
+            if morph.is_keyword(part):
+                word = '%noun%'
+                count += 1
+            template += word
+
+        if 0 < count and template not in self._template[count]:
+            self._template[count].append(template)
+
     def save(self):
-        with open(Dictionary.DICT_RANDOM, mode='w', encoding='utf-8') as f:
+        with open(Dictionary.DICT['random'], mode='w', encoding='utf-8') as f:
             f.write('\n'.join(self.random))
 
-    @staticmethod
-    def analyze(text):
-        return [(t.surface, t.part_of_speech) for t in Dictionary.TOKENIZER.tokenize(text)]
+        with open(Dictionary.DICT['pattern'], mode='w', encoding='utf-8') as f:
+            f.write('\n'.join([Dictionary.pattern_to_line(p) for p in self._pattern]))
+
+        with open(Dictionary.DICT['template'], mode='w', encoding='utf-8') as f:
+            for count, templates in self.template.items():
+                for template in templates:
+                    f.write('{}\t{}\n'.format(count, template))
 
     @staticmethod
     def pattern_to_line(pattern):
         return '{}\t{}'.format(pattern['pattern'], '|'.join(pattern['phrases']))
 
-    @staticmethod
-    def is_keyword(part):
-        return bool(re.match(r'名詞,(一般|代名詞|固有名詞|サ変接続|形容動詞語幹)', part))
